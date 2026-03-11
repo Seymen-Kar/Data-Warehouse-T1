@@ -27,8 +27,12 @@ df = df.dropna(subset=['cst_id'])
 # Remove duplicate customer IDs
 df = df.drop_duplicates(subset=['cst_id'], keep='last')
 
+df["cst_firstname"] = df["cst_firstname"].str.strip()
+df["cst_lastname"] = df["cst_lastname"].str.strip()
+
 # Convert customer ID back to integer
 df['cst_id'] = df['cst_id'].astype(int)
+
 
 # Transform marital status
 marital_map = {
