@@ -17,6 +17,11 @@ files_to_load = [
     (
         "transformation.crm_cust_info",
         r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\crm_cust_info_cleaned.csv"
+
+    ),
+    (
+        "transformation.crm_prd_info",
+        r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\crm_prd_info_cleaned.csv"
     ),
 ]
 
