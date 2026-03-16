@@ -1,0 +1,60 @@
+import psycopg
+import pandas as pd
+
+DB_NAME = "DWH"
+HOST = "localhost"
+PORT = 5432
+USER = "postgres"
+PASSWORD = "seymen123"
+
+conn = psycopg.connect(
+    host=HOST,
+    port=PORT,
+    dbname=DB_NAME,
+    user=USER,
+    password=PASSWORD,
+    autocommit=True
+)
+
+df = pd.read_sql_query(
+    sql="SELECT * FROM ingestion.crm_prd_info",
+    con=conn
+)
+
+
+df["prd_category"] = df["prd_key"].str[:5]
+
+df["prd_category"] = df["prd_category"].str.replace("-", "_")
+
+df["prd_cost"] = df["prd_cost"].fillna("0")
+
+df["prd_line"] = df["prd_line"].str.replace("R", "Road")
+df["prd_line"] = df["prd_line"].str.replace("S", "Sport")
+df["prd_line"] = df["prd_line"].str.replace("M", "Mountain")
+df["prd_line"] = df["prd_line"].str.replace("T", "Touring")
+df["prd_line"] = df["prd_line"].fillna("N/A")
+
+
+df["prd_start_dt"] = pd.to_datetime(df["prd_start_dt"], errors="coerce")
+df["prd_end_dt"] = pd.to_datetime(df["prd_end_dt"], errors="coerce")
+
+df = df.sort_values(["prd_key", "prd_id"]).copy()
+
+df["prd_end_dt"] = (
+    df.groupby("prd_key")["prd_start_dt"].shift(-1) - pd.Timedelta(days=1)
+)
+df = df.sort_values("prd_id").copy()
+
+
+df["prd_end_dt"] = df["prd_end_dt"].dt.strftime("%Y-%m-%d")
+df["prd_end_dt"] = df["prd_end_dt"].fillna("NaT")
+
+print(df)
+conn.close()
+
+df.to_csv(
+    r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\crm_prd_info_cleaned.csv",
+    index=False
+)
+
+print("✅ Cleaned CSV saved")
