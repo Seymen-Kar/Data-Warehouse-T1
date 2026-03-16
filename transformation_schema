@@ -52,8 +52,9 @@ def create_schema_and_tables():
                     prd_nm         VARCHAR(255),
                     prd_cost       NUMERIC(12, 2),
                     prd_line       VARCHAR(50),
-                    prd_start_dt   DATE,
-                    prd_end_dt     DATE
+                    prd_start_dt   VARCHAR(50),
+                    prd_end_dt     VARCHAR(50),
+                    prd_category   VARCHAR(50)
                 );
             """)
 
