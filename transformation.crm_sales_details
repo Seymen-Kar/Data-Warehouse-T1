@@ -1,0 +1,55 @@
+import psycopg
+import pandas as pd
+import numpy as np
+
+DB_NAME = "DWH"
+HOST = "localhost"
+PORT = 5432
+USER = "postgres"
+PASSWORD = "seymen123"
+
+conn = psycopg.connect(
+    host=HOST,
+    port=PORT,
+    dbname=DB_NAME,
+    user=USER,
+    password=PASSWORD,
+    autocommit=True
+)
+
+df = pd.read_sql_query(
+    sql="SELECT * FROM ingestion.crm_sales_details",
+    con=conn
+)
+
+# turn integer dates into strings first, so 0 can be handled cleanly
+date_cols = ["sls_order_dt", "sls_ship_dt", "sls_due_dt"]
+
+for col in date_cols:
+    df[col] = df[col].replace(0, np.nan)
+    df[col] = pd.to_datetime(df[col].astype("Int64").astype(str), format="%Y%m%d", errors="coerce")
+
+# get one valid order date per order number
+group_order_date = df.groupby("sls_ord_num")["sls_order_dt"].transform("min")
+
+# fill missing order dates from other rows in same order
+df["sls_order_dt"] = df["sls_order_dt"].fillna(group_order_date)
+
+# if still missing (usually single-row orders), use ship date
+df["sls_order_dt"] = df["sls_order_dt"].fillna(df["sls_ship_dt"])
+
+df.loc[df['sls_price'] < 0, 'sls_price'] = df['sls_sales'] / df['sls_quantity']
+df.loc[df['sls_price'].isna(), 'sls_price'] = df['sls_sales'] / df['sls_quantity']
+
+df['sls_sales'] = df ['sls_quantity'] * df['sls_price']
+
+print(df)
+
+conn.close()
+
+df.to_csv(
+    r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\crm_sales_details_cleaned.csv",
+    index=False
+)
+
+print("✅ Cleaned CSV saved")
