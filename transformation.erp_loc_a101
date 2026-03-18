@@ -1,0 +1,44 @@
+import psycopg
+import pandas as pd
+
+DB_NAME = "DWH"
+HOST = "localhost"
+PORT = 5432
+USER = "postgres"
+PASSWORD = "seymen123"
+
+conn = psycopg.connect(
+    host=HOST,
+    port=PORT,
+    dbname=DB_NAME,
+    user=USER,
+    password=PASSWORD,
+    autocommit=True
+)
+
+df = pd.read_sql_query(
+    sql="SELECT * FROM ingestion.erp_loc_a101",
+    con=conn
+)
+
+df["cid"] = df["cid"].astype(str).str[-5:]
+
+df["cntry"] = df["cntry"].astype(str).str.strip()
+df.loc[df["cntry"] == "", "cntry"] = "NA"
+df["cntry"] = df["cntry"].replace({
+    "DE": "Germany",
+    "US": "United States",
+    "USA": "United States",
+    "UK": "United Kingdom",
+    "None": "NA",
+    "nan": "NA"
+})
+
+df["cntry"] = df["cntry"].fillna("NA")
+
+df.to_csv(
+    r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\erp_loc_a101_cleaned.csv",
+    index=False
+)
+
+print("✅ Cleaned CSV saved")
