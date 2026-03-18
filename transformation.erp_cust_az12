@@ -1,0 +1,43 @@
+import psycopg
+import pandas as pd
+
+DB_NAME = "DWH"
+HOST = "localhost"
+PORT = 5432
+USER = "postgres"
+PASSWORD = "seymen123"
+
+conn = psycopg.connect(
+    host=HOST,
+    port=PORT,
+    dbname=DB_NAME,
+    user=USER,
+    password=PASSWORD,
+    autocommit=True
+)
+
+df = pd.read_sql_query(
+    sql="SELECT * FROM ingestion.erp_cust_az12",
+    con=conn
+)
+
+
+
+df["cid"] = df["cid"].astype(str).str[-5:]
+df["cid"] = pd.to_numeric(df["cid"], errors="coerce")
+
+today = pd.Timestamp.today().normalize()
+df["bdate"] = pd.to_datetime(df["bdate"], errors="coerce")
+df.loc[df["bdate"] > today, "bdate"] = pd.NaT
+
+df["gen"] = (df["gen"].astype(str).str.strip().str.lower())
+df["gen"] = df["gen"].replace({"m": "Male","f": "Female"})
+df.loc[~df["gen"].isin(["male", "female"]), "gen"] = "NA"
+
+
+df.to_csv(
+    r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\erp_cust_az12_cleaned.csv",
+    index=False
+)
+
+print("✅ Cleaned CSV saved")
