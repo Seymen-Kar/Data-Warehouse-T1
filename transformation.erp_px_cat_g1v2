@@ -1,0 +1,30 @@
+import psycopg
+import pandas as pd
+import numpy as np
+
+DB_NAME = "DWH"
+HOST = "localhost"
+PORT = 5432
+USER = "postgres"
+PASSWORD = "seymen123"
+
+conn = psycopg.connect(
+    host=HOST,
+    port=PORT,
+    dbname=DB_NAME,
+    user=USER,
+    password=PASSWORD,
+    autocommit=True
+)
+
+df = pd.read_sql_query(
+    sql="SELECT * FROM ingestion.erp_px_cat_g1v2",
+    con=conn
+)
+
+df.to_csv(
+    r"C:\Users\seyme\OneDrive\Masaüstü\Data engineering and Data governance\erp_px_cat_g1v2_cleaned.csv",
+    index=False
+)
+
+print("✅ Cleaned CSV saved")
